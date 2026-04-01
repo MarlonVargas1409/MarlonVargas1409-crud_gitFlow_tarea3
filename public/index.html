@@ -4,18 +4,64 @@
     <meta charset="UTF-8">
     <title>Inventario Supermercado ITLA</title>
     <style>
-        body { font-family: sans-serif; margin: 40px; background: #f4f4f4; }
-        h1 { color: #2c3e50; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background: #eef2f3; }
+        .container { max-width: 900px; margin: auto; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1, h2 { color: #2c3e50; margin-top: 0; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        
+        button { cursor: pointer; padding: 8px 15px; border: none; border-radius: 6px; font-weight: bold; transition: 0.3s; }
+        .btn-save { background: #27ae60; color: white; width: 100%; font-size: 16px; margin-top: 10px; }
+        .btn-edit { background: #f39c12; color: white; margin-right: 5px; }
+        .btn-delete { background: #e74c3c; color: white; }
+        .btn-refresh { background: #3498db; color: white; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
-        th { background-color: #3498db; color: white; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background-color: #f8f9fa; }
     </style>
 </head>
 <body>
+
+<div class="container">
     <div class="card">
-        <h1>🛒 Inventario de Productos</h1>
-        <button onclick="cargarProductos()">Actualizar Lista</button>
+        <h2 id="form-title">➕ Gestionar Producto</h2>
+        <form id="form-producto">
+            <input type="hidden" id="producto-id"> <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" id="nombre" required>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label>Categoría</label>
+                    <select id="categoria">
+                        <option value="Lácteos">Lácteos</option>
+                        <option value="Cárnicos">Cárnicos</option>
+                        <option value="Granos">Granos</option>
+                        <option value="Bebidas">Bebidas</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label>Precio</label>
+                    <input type="number" id="precio" required>
+                </div>
+                <div style="flex: 1;">
+                    <label>Stock</label>
+                    <input type="number" id="stock" required>
+                </div>
+            </div>
+            <button type="submit" id="btn-submit" class="btn-save">Guardar Producto</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <div style="display: flex; justify-content: space-between;">
+            <h2>🛒 Inventario</h2>
+            <button class="btn-refresh" onclick="cargarProductos()">🔄 Refrescar</button>
+        </div>
         <table id="tabla-productos">
             <thead>
                 <tr>
@@ -23,28 +69,94 @@
                     <th>Categoría</th>
                     <th>Precio</th>
                     <th>Stock</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
     </div>
+</div>
 
-    <script>
-        async function cargarProductos() {
-            const res = await fetch('/api/products');
-            const { products } = await res.json();
-            const tbody = document.querySelector('#tabla-productos tbody');
-            tbody.innerHTML = '';
-            products.forEach(p => {
-                tbody.innerHTML += `<tr>
+<script>
+    const form = document.getElementById('form-producto');
+    const inputId = document.getElementById('producto-id');
+    const btnSubmit = document.getElementById('btn-submit');
+    const formTitle = document.getElementById('form-title');
+
+    // 1. CARGAR PRODUCTOS (READ)
+    async function cargarProductos() {
+        const res = await fetch('/api/products');
+        const data = await res.json();
+        const tbody = document.querySelector('#tabla-productos tbody');
+        tbody.innerHTML = '';
+        
+        data.products.forEach(p => {
+            tbody.innerHTML += `
+                <tr>
                     <td>${p.nombre}</td>
                     <td>${p.categoria}</td>
-                    <td>$${p.precio}</td>
+                    <td>RD$ ${p.precio}</td>
                     <td>${p.stock}</td>
+                    <td>
+                        <button class="btn-edit" onclick="prepararEdicion('${p._id}', '${p.nombre}', '${p.categoria}', ${p.precio}, ${p.stock})">Editar</button>
+                        <button class="btn-delete" onclick="borrarProducto('${p._id}')">Borrar</button>
+                    </td>
                 </tr>`;
-            });
-        }
+        });
+    }
+
+    // 2. BORRAR PRODUCTO (DELETE)
+    async function borrarProducto(id) {
+        if (!confirm('¿Seguro que quieres eliminar este producto?')) return;
+        
+        await fetch(`/api/products/${id}`, { method: 'DELETE' });
         cargarProductos();
-    </script>
+    }
+
+    // 3. PREPARAR EDICIÓN (Cargar datos al form)
+    function prepararEdicion(id, nombre, categoria, precio, stock) {
+        inputId.value = id;
+        document.getElementById('nombre').value = nombre;
+        document.getElementById('categoria').value = categoria;
+        document.getElementById('precio').value = precio;
+        document.getElementById('stock').value = stock;
+        
+        formTitle.innerText = "📝 Editar Producto";
+        btnSubmit.innerText = "Actualizar Cambios";
+        btnSubmit.style.background = "#f39c12";
+    }
+
+    // 4. GUARDAR O ACTUALIZAR (CREATE / UPDATE)
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = inputId.value;
+        const url = id ? `/api/products/${id}` : '/api/products';
+        const method = id ? 'PUT' : 'POST';
+
+        const datos = {
+            nombre: document.getElementById('nombre').value,
+            categoria: document.getElementById('categoria').value,
+            precio: Number(document.getElementById('precio').value),
+            stock: Number(document.getElementById('stock').value)
+        };
+
+        await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+
+        // Resetear Formulario
+        form.reset();
+        inputId.value = '';
+        formTitle.innerText = "➕ Gestionar Producto";
+        btnSubmit.innerText = "Guardar Producto";
+        btnSubmit.style.background = "#27ae60";
+        
+        cargarProductos();
+    });
+
+    cargarProductos();
+</script>
 </body>
 </html>
