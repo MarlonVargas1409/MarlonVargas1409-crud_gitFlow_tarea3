@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventario Supermercado ITLA</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; background: #f4f4f4; }
+        h1 { color: #2c3e50; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background-color: #3498db; color: white; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🛒 Inventario de Productos</h1>
+        <button onclick="cargarProductos()">Actualizar Lista</button>
+        <table id="tabla-productos">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        async function cargarProductos() {
+            const res = await fetch('/api/products');
+            const { products } = await res.json();
+            const tbody = document.querySelector('#tabla-productos tbody');
+            tbody.innerHTML = '';
+            products.forEach(p => {
+                tbody.innerHTML += `<tr>
+                    <td>${p.nombre}</td>
+                    <td>${p.categoria}</td>
+                    <td>$${p.precio}</td>
+                    <td>${p.stock}</td>
+                </tr>`;
+            });
+        }
+        cargarProductos();
+    </script>
+</body>
+</html>
