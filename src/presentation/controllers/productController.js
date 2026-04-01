@@ -4,4 +4,8 @@ const createProduct = async (req, res) => {
     await product.save();
     res.status(201).json({ ok: true, product });
 };
+const getProducts = async (req, res) => {
+    const products = await Product.find();
+    res.json({ ok: true, products });
+};
 module.exports = { createProduct };
