@@ -1,5 +1,10 @@
 const { Router } = require('express');
-const { createProduct } = require('../controllers/productController');
+const { 
+    createProduct, 
+    getProducts, 
+    updateProduct, 
+    deleteProduct 
+} = require('../controllers/productController');
 const router = Router();
 router.post('/', createProduct);
 router.get('/', getProducts);

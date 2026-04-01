@@ -7,4 +7,5 @@ app.use(express.json());
 app.use(express.static('public'));
 app.get('/', (req, res) => res.send('SUPERMERCADO-API-READY'));
 app.use('/api/products', require('./src/presentation/routes/productRoutes'));
-app.listen(process.env.PORT, () => console.log('Server running'));
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log(` Servidor corriendo en el puerto ${port}`));
